@@ -7,6 +7,7 @@ select count(*),status from (
     to_char(bills.createdate, 'DD/MM/YYYY'),
    to_char( bills.updatedate, 'DD/MM/YYYY'),
     to_char(bills.introduceddate, 'DD/MM/YYYY'),
+   EXTRACT(DAY FROM bills.updatedate - bills.createdate) no_days,
     members.party,
     members.state,
     bill_count_tbl.ac_count,
