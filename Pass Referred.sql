@@ -1,4 +1,4 @@
-select count(*) from (
+select count(*),status from (
 
   SELECT
     tb1.bill_id,
@@ -10,18 +10,17 @@ select count(*) from (
     members.party,
     members.state,
     bill_count_tbl.ac_count,
-    CASE WHEN upper(text_string) LIKE upper('%PASS%')
+    CASE WHEN upper(text_string) LIKE upper('%status%') or upper(text_string) LIKE upper('%BecameLaw%')
       THEN 'Passed'
-    WHEN upper(text_string) LIKE upper('%Refer%')
-      THEN 'Referred'
-    ELSE 'Others' END status
+
+    ELSE 'REFERRED' END status
   FROM (SELECT
           bill_id,
           string_agg(status, ' ') text_string
         FROM (SELECT
                 bill_id,
                 action_date,
-                text                        status,
+                type                        status,
                 max(action_date)
                 OVER
                   (
@@ -41,5 +40,5 @@ select count(*) from (
     on members.bioguideid = sponsors.sponsor_id
 
 
-) tbl
+) tbl group by status
 ;
