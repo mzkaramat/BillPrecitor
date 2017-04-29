@@ -1,9 +1,5 @@
 {
- "meta": {
-  "limit": 100, 
-  "offset": 0, 
-  "total_count": 12063
- }, 
+ 
  "objects": [
   {
    "bill_resolution_type": "bill", 

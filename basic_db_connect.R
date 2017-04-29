@@ -20,6 +20,8 @@ rm(pw) # removes the password
 dbExistsTable(con, "bills")
 # TRUE
 
-sql_command<-'select count(*) from bills'
+sql_command<-'select * from bills'
 
-dbGetQuery(con, sql_command)
+bills<-dbGetQuery(con, sql_command)
+
+bills$id
