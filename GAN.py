@@ -7,7 +7,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 
 # load ascii text and covert to lowercase
-filename = "C:\\Users\\Sarthak\\celonis\\titles.txt"
+filename = "/home/hackathon/sandbox/titles.txt"
 raw_text = open(filename).read()
 raw_text = raw_text.lower()
 
