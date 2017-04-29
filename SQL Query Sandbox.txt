@@ -1,0 +1,152 @@
+select * from bills;
+
+
+select distinct originalchamber from bills;
+
+select text from actions where upper(text) like '%REJECT%';
+
+select * from actions A where upper(text) like '%REJECT%' and not exists(
+  select * from actions where upper(text) like upper('%Became Public%') and actions.bill_id = A.bill_id);
+select * from actions where upper(text) like '%REJECT%';
+
+select text from actions where bill_id = 'HR1735' order by action_date;
+
+select DISTINCT  action_code from actions;
+
+select distinct text from actions where action_date = (
+  select max(A.action_date) from actions A where A.action_code = actions.action_code) group by action_code;
+
+select count(distinct text) from actions;
+
+select * from actions;
+
+select distinct bill_type from actions;
+
+select * from bills;
+
+select * from actions where text like '';
+
+select * from actions where bill_id = 'HCONRES100' ORDER BY action_code;
+
+SELECT  DISTINCT  substr(action_code,1,1) from actions;
+
+select * from actions where upper(bill_id) like '%HCONRES10%' order by action_date;
+
+
+select bill_id,action_date, split_part( text, ' ' , 1 ) from actions;
+
+
+
+select count(*) from (select
+  DISTINCT
+  first_value(status) OVER (PARTITION BY bill_id ORDER BY action_date DESC) from ( select
+  bill_id,action_date,text  status from actions) tb) tb;
+
+
+select
+  DISTINCT
+  first_value(status) OVER (PARTITION BY bill_id ORDER BY action_date DESC) from ( select
+  bill_id,action_date,text  status from actions) tb;
+
+select * from actions where upper(bill_id) like '%HCONRES10%' order by action_date;
+
+SELECT DISTINCT ON (bill_id)
+       bill_id,status
+FROM   (
+  select bill_id,action_date, text status from actions
+       )tbl
+ORDER  BY bill_id,action_date DESC;
+
+
+select count(DISTINCT  bill_id) from (SELECT DISTINCT ON (bill_id)
+       bill_id,status
+FROM   (
+  select bill_id,action_date, text status from actions
+
+       )tbl
+ORDER  BY bill_id,action_date DESC) tb1;
+
+
+select DISTINCT status from (SELECT DISTINCT ON (action_date)
+       bill_id,status
+FROM   (
+  select bill_id,action_date, text status from actions
+
+       )tbl
+ORDER  BY action_date DESC);
+
+select count(DISTINCT  bill_id) from actions;
+select count(DISTINCT  bill_id) from (select bill_id,action_date, split_part( text, ' ' , 1 ) status from actions) tb;
+
+
+select * from actions where bill_id = 'max_thing'  ORDER BY  action_date;
+
+
+select title,length(title) from bills;
+
+select avg(length(title)),avg(array_length(regexp_split_to_array(title, '\s'),1)) from bills;
+
+select * from bills;
+
+select count(DISTINCT  sponsor_id) from cosponsors;
+
+select count(*),status from (
+
+  SELECT
+    tb1.bill_id,
+    bills.bill_type,
+    bills.originchamber,
+    to_char(bills.createdate, 'DD/MM/YYYY'),
+   to_char( bills.updatedate, 'DD/MM/YYYY'),
+    to_char(bills.introduceddate, 'DD/MM/YYYY'),
+   EXTRACT(DAY FROM bills.updatedate - bills.createdate) no_days,
+    members.party,
+    members.state,
+    bill_count_tbl.ac_count,
+    CASE WHEN upper(text_string) LIKE upper('%status%') or upper(text_string) LIKE upper('%BecameLaw%')
+      THEN 'Passed'
+
+    ELSE 'REFERRED' END status
+  FROM (SELECT
+          bill_id,
+          string_agg(status, ' ') text_string
+        FROM (SELECT
+                bill_id,
+                action_date,
+                type                        status,
+                max(action_date)
+                OVER
+                  (
+                  PARTITION BY bill_id ) AS max_thing
+              FROM actions) tb
+        WHERE tb.max_thing = tb.action_date
+        GROUP BY bill_id) tb1 INNER JOIN bills ON bills.id = tb1.bill_id
+    INNER JOIN (SELECT
+                  count(*) ac_count,
+                  bill_id
+                FROM actions
+                GROUP BY bill_id) bill_count_tbl
+      ON bill_count_tbl.bill_id = tb1.bill_id
+    inner join sponsors
+    on sponsors.bill_id = tb1.bill_id
+  inner join members
+    on members.bioguideid = sponsors.sponsor_id
+
+
+) tbl group by status
+;
+
+select id,bill_type,originchamber from bills;
+
+
+select type ,count(*) from actions group by type;
+
+
+select bill_id,type,action_date from actions order by bill_id,type;
+
+select * from actions where bill_id = 'HCONRES1' order by action_date;
+
+
+select * from actions
+
+ SELECT     tb1.bill_id,     bills.bill_type,     bills.originchamber,     to_char(bills.createdate, 'DD/MM/YYYY') createdate,    to_char( bills.updatedate, 'DD/MM/YYYY') updatedate,     to_char(bills.introduceddate, 'DD/MM/YYYY') introduceddate,    EXTRACT(DAY FROM bills.updatedate - bills.createdate) no_days,     members.party,     members.state,     bill_count_tbl.ac_count,     CASE WHEN upper(text_string) LIKE upper('%status%') or upper(text_string) LIKE upper('%BecameLaw%')       THEN 'Passed'      ELSE 'REFERRED' END status   FROM (SELECT           bill_id,           string_agg(status, ' ') text_string         FROM (SELECT                 bill_id,                 action_date,                 type                        status,                 max(action_date)                 OVER                   (                   PARTITION BY bill_id ) AS max_thing               FROM actions) tb         WHERE tb.max_thing = tb.action_date         GROUP BY bill_id) tb1 INNER JOIN bills ON bills.id = tb1.bill_id     INNER JOIN (SELECT                   count(*) ac_count,                   bill_id                 FROM actions                 GROUP BY bill_id) bill_count_tbl       ON bill_count_tbl.bill_id = tb1.bill_id     inner join sponsors     on sponsors.bill_id = tb1.bill_id   inner join members     on members.bioguideid = sponsors.sponsor_id
