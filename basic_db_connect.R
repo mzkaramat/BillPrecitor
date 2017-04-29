@@ -17,11 +17,26 @@ con <- dbConnect(drv, dbname = "congress",
 rm(pw) # removes the password
 
 # check for the cartable
-dbExistsTable(con, "bills")
+bills<-dbExistsTable(con, "bills")
 # TRUE
 
 sql_command<-'select * from bills'
 
 bills<-dbGetQuery(con, sql_command)
 
-bills$id
+str(bills)
+
+class(bills)
+
+structure(bills)
+
+summary(bills)
+
+head(bills)
+
+factor(bills$originchamber)
+
+sql_command <- 'select bill_id,text,count(*) from actions where action_date = (select max(A.action_date) from actions A where A.action_code = actions.action_code) group by bill_id,text;'
+
+bills_status = dbGetQuery(con,sql_command)
+
