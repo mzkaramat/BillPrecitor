@@ -23,3 +23,5 @@ bills<-dbGetQuery(con, sql_command)
 nrow(bills)
 
 colnames(bills)
+
+summary(bills)
