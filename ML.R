@@ -40,9 +40,11 @@ library(caret)
 
 
 
-
+#colnames(bills) <- c("Bill Id", "Bill Type","originchamber","createdate","updatedate","introduceddate"
+#                     "No of Days","Party Type","state","Actions count","status"
+#                    )
 # create a list of 80% of the rows in the original dataset we can use for training
-validation_index <- createDataPartition(bills$status, p=0.80, list=FALSE)
+validation_index <- createDataPartition(bills$status, p=0.85, list=FALSE)
 # select 20% of the data for validation
 validation <- bills[-validation_index,]
 # use the remaining 80% of data to training and testing the models
@@ -52,7 +54,7 @@ dataset <- bills[validation_index,]
 
 
 
-control <- trainControl(method="repeatedcv", number=10, repeats=3)
+control <- trainControl(method="repeatedcv", number=10, repeats=5)
 modelLvq <- train(status~no_days+party+ac_count, data=dataset, method="lvq", trControl=control)
 
 modelGbm <- train(status~no_days+party+ac_count, data=dataset, method="gbm", trControl=control, verbose=FALSE)
@@ -60,7 +62,24 @@ modelGbm <- train(status~no_days+party+ac_count, data=dataset, method="gbm", trC
 
 modelSvm <- train(status~no_days+party+ac_count, data=dataset, method="svmRadial", trControl=control)
 
-modelRpart <- train(status~no_days+party+ac_count, data=dataset, method="rpart", trControl=control)
+
+#Final model choice
+modelRpart <- train(status~no_days+party+ac_count+state, data=dataset, method="rpart", trControl=control)
+predictions <- predict(modelRpart, validation)
+confusionMatrix(predictions, validation$status)
+
+plotcp(modelRpart)
+printcp(modelRpart)
+
+rpart.plot(modelRpart$finalModel)
+prp(modelRpart$finalModel)
+plot(modelRpart$finalModel, uniform=TRUE, 
+     main="Classification Tree for Kyphosis")
+text(modelRpart$finalModel, use.n=TRUE, all=TRUE, cex=.8)
+
+library(RColorBrewer)
+library(rattle)
+fancyRpartPlot(modelRpart$finalModel)
 
 
 results <- resamples(list(LVQ=modelLvq, GBM=modelGbm, SVM=modelSvm,modelRpart))
@@ -92,7 +111,7 @@ dataset$status <- as.factor(dataset$status)
 model <- C5.0(status~no_days+party+ac_count, data = dataset)
 results <- predict(object = model, newdata = validation, type = "class")
 table(results, validation$status)
-
+confusionMatrix(results, validation$status)
 
 
 # Now Kmeans
@@ -103,7 +122,7 @@ model <- svm(status~no_days+party+ac_count, data = dataset)
 results <- predict(object = model, newdata = validation, type = "class")
 
 table(results, validation$status)
-
+confusionMatrix(results, validation$status)
 
 
 
@@ -118,14 +137,20 @@ results$confusion
 model <- naiveBayes(x = subset(dataset, select=-status), y = dataset$status)
 results <- predict(object = model, newdata = validation, type = "class")
 table(results, validation$status)
+confusionMatrix(results, validation$status)
+
 
 #Using Rpart
 model <- rpart(status~no_days+party+ac_count, data = dataset)
 results <- predict(object = model, newdata = validation, type = "class")
-table(results, validation$status)
-
-
-
+confusionMatrix(results, validation$status)
+printcp(model)
+plotcp(model)
+plot(model, uniform=TRUE, 
+     main="Classification Tree for Kyphosis")
+text(model, use.n=TRUE, all=TRUE, cex=.8)
+library(rpart.plot)
+rpart.plot(model)
 
 rm(list = ls(all = TRUE)) 
 gc(reset=TRUE)
