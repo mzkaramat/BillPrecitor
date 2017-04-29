@@ -1,7 +1,9 @@
-select bill_id,
+select bill_id,bills.bill_type,bills.originchamber,
 case when upper(text_string) like '%PASS%'
   then 'Passed'
 when upper(text_string) like '%PASS%' then 'Referred' else 'Referred' end status
 from (select bill_id,string_agg(status,' ') text_string from (select bill_id,action_date, text status, max(action_date) over
-  (partition by bill_id) as max_thing from actions) tb where tb.max_thing = tb.action_date
-group by bill_id) tb1
+  (partition by bill_id) as max_thing from actions) tb
+  where tb.max_thing = tb.action_date
+group by bill_id) tb1  inner join bills on bills.id = tb1.bill_id
+;
