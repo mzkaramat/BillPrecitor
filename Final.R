@@ -1,6 +1,6 @@
 # install.packages("RPostgreSQL")
 require("RPostgreSQL")
-
+set.seed(0)
 # create a connection
 # save the password that we can "hide" it as best as we can by collapsing it
 pw <- {
@@ -32,6 +32,8 @@ library(mlbench)
 library(caret)
 
 validation_index <- createDataPartition(bills$status, p=0.85, list=FALSE)
+bills$party <- as.factor(bills$party)
+bills$status <- as.factor(bills$status)
 # select 20% of the data for validation
 validation <- bills[-validation_index,]
 # use the remaining 80% of data to training and testing the models
@@ -47,7 +49,7 @@ printcp(modelRpart)
 
 rpart.plot(modelRpart$finalModel)
 prp(modelRpart$finalModel)
-plot(modelRpart$finalModel, uniform=TRUE, 
+plot(modelRpart$finalModel,  uniform=TRUE, 
      main="Classification Tree for Kyphosis")
 text(modelRpart$finalModel, use.n=TRUE, all=TRUE, cex=.8)
 
