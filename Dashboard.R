@@ -108,7 +108,7 @@ ui <- dashboardPage(
                 h2("Second analysis tab")
               ),
               
-              mainPanel(plotOutput("network_plot"))
+              mainPanel(plotOutput("network_plot", height = 400))
             )),
     
     # Second tab content
