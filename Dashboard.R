@@ -246,6 +246,8 @@ server <- function(input, output) {
           edge.alpha = 0.5
         )
         )
+      }else{
+        showNotification("No data found.",duration = 3)
         }
       
     })
