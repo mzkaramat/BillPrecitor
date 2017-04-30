@@ -10,6 +10,7 @@ library(mlbench)
 library(caret)
 set.seed(0)
 library(GGally)
+library(plotly)
 
 devtools::install_github("briatte/ggnet")
 library(ggnet)
@@ -37,6 +38,20 @@ con <- dbConnect(
   user = "user04",
   password = pw
 )
+
+
+
+sql_command<- "SELECT   c.name,   to_char(a.action_date, 'YYYY-MM') dt,   count(*) cnt FROM actions a, committees c WHERE a.committee = c.id       AND a.type = 'IntroReferral'       AND c.name IN (   SELECT name   FROM (          SELECT            c.name,            count(*) cnt          FROM actions a, committees c          WHERE a.committee = c.id                AND a.type = 'IntroReferral'          GROUP BY c.name          ORDER BY cnt DESC          LIMIT 5) tb) GROUP BY   c.name, to_char(a.action_date, 'YYYY-MM') order by dt , cnt desc"
+
+bills<-dbGetQuery(con, sql_command)
+bills<- bills[,c(2,1,3)]
+cr <- xtabs(cnt~.,bills)
+
+
+cr$dt<- rownames(cr)
+cr <- as.data.frame.matrix(cr)
+
+
 
 
 sql_command <-
@@ -85,28 +100,21 @@ ui <- dashboardPage(
       tabName = "tb_introduction",
       icon = icon("dashboard")
     ),
-    menuItem("Analysis", tabName = "tb_analysis", icon = icon("th")),
-    menuItem("Time analysis", tabName = "tb_time_analyzer", icon = icon("th")),
+    menuItem("Process Analysis", tabName = "tb_analysis", icon = icon("th")),
+    menuItem("Bill timelines", tabName = "tb_time_analyzer", icon = icon("th")),
     menuItem("Bill Predictor", tabName = "tb_bil_pred", icon = icon("th")), 
-    menuItem("Insights Analyzer", tabName = "tb_insight", icon = icon("th")), 
     menuItem("Title generator", tabName = "tb_title_gen", icon = icon("th"))
   )),
   dashboardBody(tabItems(
     # First tab content
     tabItem(tabName = "tb_introduction",
-            fluidRow(
-              # A static infoBox
-              infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
-              # Dynamic infoBoxes
-              infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
-              infoBox("New Orders", 10 * 2, icon = icon("credit-card"))
-            ),
+            
             
             # infoBoxes with fill=TRUE
             fluidRow(
-              infoBox("New Orders", 10 * 2, icon = icon("credit-card"), fill = TRUE),
-              infoBox("New Orders", 10 * 2, icon = icon("credit-card"), fill = TRUE),
-              infoBox("New Orders", 10 * 2, icon = icon("credit-card"), fill = TRUE)
+              infoBox("Most number of actions", 261, icon = icon("credit-card")),
+              infoBox("Most time taking bill", 785, icon = icon("credit-card")),
+              infoBox("The leader", "?name?", icon = icon("credit-card"))
             ),
             
             fluidRow(
@@ -167,26 +175,42 @@ ui <- dashboardPage(
             )),
     
     tabItem(tabName = "tb_time_analyzer",
-            fluidRow(
-              box(plotOutput("plot1", height = 250)),
-              
-              box(
-                title = "Controls",
-                sliderInput("slider", "Number of observations:", 1, 100, 50)
+            
+            
+            
+            
+            
+            
+            
+            sidebarLayout(
+              sidebarPanel(
+                h3("Time series analysis of top commities"),
+                radioButtons(
+                  "year_cmt",
+                  "Choose year ",
+                  choices = c("2015", "2016"),
+                  selected = "2015"
+                ),br(),sliderInput("month_cmt", "Choose month:",
+                                   min=0, max=12,  value = c(2,10))
               ),
-              box(
-                title = "Histogram", status = "primary", solidHeader = TRUE,
-                collapsible = TRUE,
-                plotOutput("plot3", height = 250)
-              ),
               
-              box(
-                title = "Inputs", status = "warning", solidHeader = TRUE,
-                "Box content here", br(), "More box content",
-                sliderInput("slider", "Slider input:", 1, 100, 50),
-                textInput("text", "Text input:")
-              )
-            )),
+              mainPanel(
+                box(
+                  title = "Time Series analysis", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,width = 550,height = 650,
+                  plotlyOutput("time_seri_cmt", height = "600px",width = "100%")) )
+            )
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            ),
     
     # Second tab content
     tabItem(
@@ -233,32 +257,29 @@ ui <- dashboardPage(
       )
       
     ), 
-    tabItem(tabName = "tb_insight",
-            plotOutput("ml_plot", height = 600,width = 500))
-    ,
     
     # Second tab content
     tabItem(tabName = "tb_title_gen",
-            sidebarLayout(
-              sidebarPanel(
-                sliderInput(
-                  "obs",
-                  "Number of observations:",
-                  min = 1,
-                  max = 1000,
-                  value = 500
-                )
-              ),
-              
-              mainPanel(imageOutput("myImage"))
-            ))
+           
+            
+            
+            fluidRow(
+              # Clicking this will increment the progress amount
+              box(
+                title = "Future bills generator", status = "primary", solidHeader = TRUE,
+                collapsible = TRUE,
+                plotOutput("plot4", height = 400,width = 400)
+              ))
+            
+            
+            )
   ))
 )
 
 
 server <- function(input, output) {
   set.seed(122)
-  if(FALSE){
+ 
   histdata <- rnorm(500)
   output$plot1 <- renderPlot({
     data <- histdata[seq_len(input$slider)]
@@ -328,6 +349,45 @@ server <- function(input, output) {
   
   
   
+  observeEvent(c(
+    input$year_cmt,
+    input$month_cmt
+  ),
+  {
+    # myslider is a reactive but it does not trigger the code to
+    # run here because we're using observeEvent and only specified
+    # input$mytext
+    print (input$month_cmt)
+    sql_command<-paste("SELECT   c.name,   to_char(a.action_date, 'YYYY-MM') dt,   count(*)                          cnt FROM actions a, committees c WHERE   to_char(a.action_date, 'YYYY') = '",input$year_cmt,"'   and to_char(a.action_date, 'MM') >= LPAD('",input$month_cmt[1],"',2,'0')     and to_char(a.action_date, 'MM')  <= LPAD('",input$month_cmt[2],"',2,'0') and   a.committee = c.id AND a.type = 'IntroReferral' AND c.name IN (SELECT name                                                                      FROM (SELECT                                                                              c.name,                                                                              count(*) cnt                                                                            FROM actions a, committees c                                                                            WHERE a.committee = c.id AND                                                                                  a.type = 'IntroReferral'                                                                            GROUP BY c.name                                                                            ORDER BY cnt DESC                                                                            LIMIT 5) tb) GROUP BY c.name, to_char(a.action_date, 'YYYY-MM') ORDER BY dt, cnt DESC",sep = '')
+    print(sql_command)
+    bills<-dbGetQuery(con, sql_command)
+    bills<- bills[,c(2,1,3)]
+    cr <- xtabs(cnt~.,bills)
+    cr <- as.data.frame.matrix(cr)
+   
+    cr["dt"]<- rownames(cr)
+    
+    p <- plot_ly(cr, x = ~dt, y = ~cr[,1], name = colnames(cr)[1], type = 'scatter', mode = 'lines') %>%
+      add_trace(y = ~cr[,2], name = colnames(cr)[2], mode = 'lines') %>%
+      add_trace(y = ~cr[,3], name = colnames(cr)[3], mode = 'lines') %>%
+      add_trace(y = ~cr[,4], name = colnames(cr)[4], mode = 'lines') %>%
+      add_trace(y = ~cr[,5], name = colnames(cr)[5], mode = 'lines')
+    print("I am almost there")
+   output$time_seri_cmt <- renderPlotly(p)
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   observeEvent(c(
@@ -361,32 +421,14 @@ server <- function(input, output) {
     })
     
   })
-}
+
+  output$progressBox <- renderInfoBox({
+    infoBox(
+      "Progress", paste0(25 + input$count, "%"), icon = icon("list"),
+      color = "purple"
+    )
+  })
   
-  output$myImage <- renderImage({
-    # Read myImage's width and height. These are reactive values, so this
-    # expression will re-run whenever they change.
-    width  <- session$clientData$output_myImage_width
-    height <- session$clientData$output_myImage_height
-    
-    # For high-res displays, this will be greater than 1
-    pixelratio <- session$clientData$pixelratio
-    
-    # A temp file to save the output.
-    outfile <- tempfile('E:\\Spark\\Hackathon\\image.png')
-    
-    # Generate the image file
-    png(outfile, width=width*pixelratio, height=height*pixelratio,
-        res=72*pixelratio)
-    hist(rnorm(input$obs))
-    dev.off()
-    
-    # Return a list containing the filename
-    list(src = outfile,
-         width = width,
-         height = height,
-         alt = "This is alternate text")
-  }, deleteFile = TRUE)
 }
 
 shinyApp(ui, server)
