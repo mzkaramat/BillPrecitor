@@ -115,7 +115,7 @@ ui <- dashboardPage(
             fluidRow(
               infoBox("Most number of actions", 261, icon = icon("credit-card")),
               infoBox("Most time taking bill", 785, icon = icon("credit-card")),
-              infoBox("The leader", "?name?", icon = icon("credit-card"))
+              infoBox("The youngest leader", "Lea", icon = icon("credit-card"))
             ),
             
             fluidRow(
@@ -165,7 +165,9 @@ ui <- dashboardPage(
                   choices = c("Senate", "House"),
                   selected = "Senate"
                 ),br(),selectInput("state_net", "State",
-                                   choices = sort(unique(bills$state)))
+                                   choices = sort(unique(bills$state))),
+                br(),br(),
+                dataTableOutput('mytable',width=250)
               ),
               
               mainPanel(
@@ -314,7 +316,9 @@ server <- function(input, output) {
         
         
         
-        
+        output$mytable = renderDataTable({
+          bills_inp
+        })
         
         
         output$network_plot <-renderPlot( ggnet2(
@@ -415,6 +419,40 @@ server <- function(input, output) {
     })
     
   })
+  
+  
+  
+  
+  
+  output$plot4 <- renderPlot({
+    x    <- 1:100  # Old Faithful Geyser data
+    
+    # draw the histogram with the specified number of bins
+    hist(x,  col = 'darkgray', border = 'white')
+  })
+  output$plot5 <- renderPlot({
+    x    <- 1:5  # Old Faithful Geyser data
+    
+    # draw the histogram with the specified number of bins
+    hist(x,  col = 'blue', border = 'white')
+  })
+  output$plot6 <- renderPlot({
+    x    <- 2:10  # Old Faithful Geyser data
+    
+    # draw the histogram with the specified number of bins
+    hist(x,  col = 'grey', border = 'white')
+  })
+  output$plot7 <- renderPlot({
+    x    <- 20:100  # Old Faithful Geyser data
+    
+    # draw the histogram with the specified number of bins
+    hist(x,  col = 'black', border = 'white')
+  })
+  
+  
+  
+  
+  
 
   output$progressBox <- renderInfoBox({
     infoBox(
