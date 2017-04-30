@@ -47,16 +47,17 @@ bills<-dbGetQuery(con, sql_command)
 bills<- bills[,c(2,1,3)]
 cr <- xtabs(cnt~.,bills)
 
-
-cr$dt<- rownames(cr)
 cr <- as.data.frame.matrix(cr)
+print("cr <- as.data.frame.matrix(cr)")
+cr$dt<- rownames(cr)
+
 
 
 
 
 sql_command <-
   " SELECT     tb1.bill_id,     bills.bill_type,     bills.originchamber,     to_char(bills.createdate, 'DD/MM/YYYY') createdate,    to_char( bills.updatedate, 'DD/MM/YYYY') updatedate,     to_char(bills.introduceddate, 'DD/MM/YYYY') introduceddate,    EXTRACT(DAY FROM bills.updatedate - bills.createdate) no_days,     members.party,     members.state,     bill_count_tbl.ac_count,     CASE WHEN upper(text_string) LIKE upper('%status%') or upper(text_string) LIKE upper('%BecameLaw%')       THEN 'Passed'      ELSE 'REFERRED' END status   FROM (SELECT           bill_id,           string_agg(status, ' ') text_string         FROM (SELECT                 bill_id,                 action_date,                 type                        status,                 max(action_date)                 OVER                   (                   PARTITION BY bill_id ) AS max_thing               FROM actions) tb         WHERE tb.max_thing = tb.action_date         GROUP BY bill_id) tb1 INNER JOIN bills ON bills.id = tb1.bill_id     INNER JOIN (SELECT                   count(*) ac_count,                   bill_id                 FROM actions                 GROUP BY bill_id) bill_count_tbl       ON bill_count_tbl.bill_id = tb1.bill_id     inner join sponsors     on sponsors.bill_id = tb1.bill_id   inner join members     on members.bioguideid = sponsors.sponsor_id"
-bills_inp[]
+
 
 #sql_command <-"select bill_id,count(*) cnt from actions group by bill_id"
 bills_inp <- dbGetQuery(con, sql_command)
@@ -261,15 +262,7 @@ ui <- dashboardPage(
     # Second tab content
     tabItem(tabName = "tb_title_gen",
            
-            
-            
-            fluidRow(
-              # Clicking this will increment the progress amount
-              box(
-                title = "Future bills generator", status = "primary", solidHeader = TRUE,
-                collapsible = TRUE,
-                plotOutput("plot4", height = 400,width = 400)
-              ))
+            h2("GNA/LSTM generator")
             
             
             )
@@ -279,6 +272,7 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   set.seed(122)
+  print("at start")
  
   histdata <- rnorm(500)
   output$plot1 <- renderPlot({
