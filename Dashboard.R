@@ -77,7 +77,7 @@ modelRpart <-
 
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Basic dashboard"),
+  dashboardHeader(title = "Hackathon"),
   ## Sidebar content
   dashboardSidebar(sidebarMenu(
     menuItem(
@@ -86,18 +86,56 @@ ui <- dashboardPage(
       icon = icon("dashboard")
     ),
     menuItem("Analysis", tabName = "tb_analysis", icon = icon("th")),
-    menuItem("Bill Predictor", tabName = "tb_bil_pred", icon = icon("th")),
+    menuItem("Time analysis", tabName = "tb_time_analyzer", icon = icon("th")),
+    menuItem("Bill Predictor", tabName = "tb_bil_pred", icon = icon("th")), 
+    menuItem("Insights Analyzer", tabName = "tb_insight", icon = icon("th")), 
     menuItem("Title generator", tabName = "tb_title_gen", icon = icon("th"))
   )),
   dashboardBody(tabItems(
     # First tab content
     tabItem(tabName = "tb_introduction",
             fluidRow(
-              box(plotOutput("plot1", height = 250)),
+              # A static infoBox
+              infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
+              # Dynamic infoBoxes
+              infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
+              infoBox("New Orders", 10 * 2, icon = icon("credit-card"))
+            ),
+            
+            # infoBoxes with fill=TRUE
+            fluidRow(
+              infoBox("New Orders", 10 * 2, icon = icon("credit-card"), fill = TRUE),
+              infoBox("New Orders", 10 * 2, icon = icon("credit-card"), fill = TRUE),
+              infoBox("New Orders", 10 * 2, icon = icon("credit-card"), fill = TRUE)
+            ),
+            
+            fluidRow(
+              # Clicking this will increment the progress amount
+              box(
+                title = "Histogram1", status = "primary", solidHeader = TRUE,
+                collapsible = TRUE,
+                plotOutput("plot4", height = 250)
+              ),
               
               box(
-                title = "Controls",
-                sliderInput("slider", "Number of observations:", 1, 100, 50)
+                title = "Histogram2", status = "primary", solidHeader = TRUE,
+                collapsible = TRUE,
+                plotOutput("plot5", height = 250)
+              )
+            ),
+            
+            fluidRow(
+              # Clicking this will increment the progress amount
+              box(
+                title = "Histogram3", status = "primary", solidHeader = TRUE,
+                collapsible = TRUE,
+                plotOutput("plot6", height = 250)
+              ),
+              
+              box(
+                title = "Histogram4", status = "primary", solidHeader = TRUE,
+                collapsible = TRUE,
+                plotOutput("plot7", height = 250)
               )
             )),
     
@@ -105,7 +143,7 @@ ui <- dashboardPage(
     tabItem(tabName = "tb_analysis",
             sidebarLayout(
               sidebarPanel(
-                h3("Process analyzer for the bill states"),
+                h3("Process analyzer for the bill "),
                 radioButtons(
                   "party_type_net",
                   "Party type",
@@ -121,7 +159,33 @@ ui <- dashboardPage(
                                    choices = sort(unique(bills$state)))
               ),
               
-              mainPanel(plotOutput("network_plot", height = 600))
+              mainPanel(
+                box(
+                  title = "Histogram", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,width = 550,height = 650,
+                plotOutput("network_plot", height = 600,width = 500)) )
+            )),
+    
+    tabItem(tabName = "tb_time_analyzer",
+            fluidRow(
+              box(plotOutput("plot1", height = 250)),
+              
+              box(
+                title = "Controls",
+                sliderInput("slider", "Number of observations:", 1, 100, 50)
+              ),
+              box(
+                title = "Histogram", status = "primary", solidHeader = TRUE,
+                collapsible = TRUE,
+                plotOutput("plot3", height = 250)
+              ),
+              
+              box(
+                title = "Inputs", status = "warning", solidHeader = TRUE,
+                "Box content here", br(), "More box content",
+                sliderInput("slider", "Slider input:", 1, 100, 50),
+                textInput("text", "Text input:")
+              )
             )),
     
     # Second tab content
@@ -168,7 +232,10 @@ ui <- dashboardPage(
         )
       )
       
-    ),
+    ), 
+    tabItem(tabName = "tb_insight",
+            plotOutput("ml_plot", height = 600,width = 500))
+    ,
     
     # Second tab content
     tabItem(tabName = "tb_title_gen",
@@ -183,7 +250,7 @@ ui <- dashboardPage(
                 )
               ),
               
-              mainPanel(plotOutput("distPlot"))
+              mainPanel(imageOutput("myImage"))
             ))
   ))
 )
@@ -191,6 +258,7 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   set.seed(122)
+  if(FALSE){
   histdata <- rnorm(500)
   output$plot1 <- renderPlot({
     data <- histdata[seq_len(input$slider)]
@@ -259,6 +327,9 @@ server <- function(input, output) {
   
   
   
+  
+  
+  
   observeEvent(c(
     input$no_of_days,
     input$party_type,
@@ -290,6 +361,32 @@ server <- function(input, output) {
     })
     
   })
+}
+  
+  output$myImage <- renderImage({
+    # Read myImage's width and height. These are reactive values, so this
+    # expression will re-run whenever they change.
+    width  <- session$clientData$output_myImage_width
+    height <- session$clientData$output_myImage_height
+    
+    # For high-res displays, this will be greater than 1
+    pixelratio <- session$clientData$pixelratio
+    
+    # A temp file to save the output.
+    outfile <- tempfile('E:\\Spark\\Hackathon\\image.png')
+    
+    # Generate the image file
+    png(outfile, width=width*pixelratio, height=height*pixelratio,
+        res=72*pixelratio)
+    hist(rnorm(input$obs))
+    dev.off()
+    
+    # Return a list containing the filename
+    list(src = outfile,
+         width = width,
+         height = height,
+         alt = "This is alternate text")
+  }, deleteFile = TRUE)
 }
 
 shinyApp(ui, server)
