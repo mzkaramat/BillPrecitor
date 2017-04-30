@@ -56,16 +56,28 @@
     titlePanel("US Congress bills predictor"),
     sidebarLayout(
       sidebarPanel(
-        sliderInput("no_of_days", "Days between", 0, 800, c(500), post = " days",step = 25),
-        sliderInput("ac_count", "Actions count", 0, 50, c(20), post = " actions"),
-        radioButtons("party_type", "Party type",
-                     choices = c("Republican", "Democrats"),
-                     selected = "Republican"),
-        selectInput("state", "State",
-                    choices =sort(unique(bills$state)))
+        h3("This predictor will predict the bill success rate based on important factors"),
+        br(),
+        h5(" No of days are count of days from the bill creation date"),
+        br(),
+        h5(" Action count is the count of actions on the bill"),
+        br(),
+        h5(" Party type will be either Republican or Democrat"),
+        br(),
+        h5(" And the state will be state on which the bill is presented")
       ),
-      mainPanel(
-        textOutput("text1")
+      mainPanel(sliderInput("no_of_days", "Days between", 0, 800, c(500), post = " days",step = 25),
+                br(),br(),
+                sliderInput("ac_count", "Actions count", 0, 50, c(20), post = " actions"),
+                br(),br(),
+                radioButtons("party_type", "Party type",
+                             choices = c("Republican", "Democrats"),
+                             selected = "Republican"),
+                br(),br(),
+                selectInput("state", "State",
+                            choices =sort(unique(bills$state))),
+                br(),br(),
+        h4(textOutput("text1"))
       )
     )
   )
@@ -74,7 +86,7 @@
     
     function(input, output) {
       
-      observeEvent(c(input$no_of_days,input$party_type), {
+      observeEvent(c(input$no_of_days,input$party_type,input$ac_count,input$state), {
         
         # myslider is a reactive but it does not trigger the code to 
         # run here because we're using observeEvent and only specified
@@ -85,10 +97,11 @@
         ac_count=c(input$ac_count)
         state= c(input$state)
         record <- data.frame(c(no_days),c(party),c(ac_count),c(state))
-        print (record)
+        #print (record)
         outp<- predict(modelRpart, data.frame(no_days,party,ac_count,state))
-        outp <- paste('Ouptut is ',outp)
-        print(outp)
+        outp <- paste('Bill will ',outp)
+        #print(outp)
+        print("changed")
         output$text1 <- renderText({ 
           outp
         })
