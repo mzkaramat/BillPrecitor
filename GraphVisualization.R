@@ -43,15 +43,16 @@ x = data.frame(Twitter = network.vertex.names(net))
 x = merge(x, v, by = "Twitter", sort = FALSE)$Groupe
 net %v% "party" = as.character(x)
 
-y = RColorBrewer::brewer.pal(9, "Set1")[ c(3, 1, 9, 6, 8, 5, 2) ]
 names(y) = levels(x)
 
 net = rgraph(10, mode = "graph", tprob = 0.5)
 net = network(net, directed = FALSE)
 
-ggnet2(net, color = "orange", label = TRUE,
+ggnet2(net, color = "orange",
        alpha = 0.75, size = 10, edge.alpha = 0.5
        )
+
+ggnet2(net, color = "grey", label = TRUE,palette = y, alpha = 0.75, size = 4, edge.alpha = 0.5)
 
 # vertex names
 network.vertex.names(net) = letters[1:10]
